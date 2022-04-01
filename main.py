@@ -1,12 +1,21 @@
 import matplotlib.pyplot as plt
+import numpy as np
+
 from CONFIG import *
 import wall
 import tqdm
-from PLOTTING import add_to_plot, plot_results, plot_pressure
+from PLOTTING import add_to_plot, plot_results, plot_against_time
+from math import floor
 
 
-np.random.seed(31)
-pressure = []
+np.random.seed(42)
+
+
+# Here are the parameters to be plotted!
+pressure = np.zeros(NUM_TIMESTEPS)
+energy = np.zeros(NUM_TIMESTEPS)
+avg_velocity = np.zeros((NUM_TIMESTEPS, 3))
+cell_average_y_velocities = np.zeros((NUM_TIMESTEPS, NUM_CELLS))
 
 def main():
     y_velocity = np.zeros((NUM_SIMS, NUM_TIMESTEPS))
@@ -22,13 +31,14 @@ def main():
         pos = np.random.random(size=(3, NUM_PARTICLES)) * [[D_Z], [D_Z], [HEIGHT]]
         vel = np.random.normal(0, WALL_TEMPERATURE, size=(3, NUM_PARTICLES))
 
-
-        NUM_COLLISIONS = 0
+        num_collisions = 0
         for i in (pbar := tqdm.trange(NUM_TIMESTEPS, desc=f'Simulation {sim+1} of {NUM_SIMS}')):
-            pbar.set_postfix(ordered_dict={'collisions': NUM_COLLISIONS})
+            pbar.set_postfix(ordered_dict={'collisions': num_collisions})
+
+            avg_velocity[i, :] = np.mean(vel[:, :], axis=1)
 
             pos += D_T * vel
-            NUM_COLLISIONS = 0
+            num_collisions = 0
 
             SpecularWall.collide_with_specular_wall(pos[2], vel[2])
             ThermalWall.collide_with_thermal_wall(pos, vel)
@@ -36,14 +46,18 @@ def main():
             # Set Periodic Boundary conditions
             pos[:2] = np.mod(pos[:2], D_Z)
 
+            bottoms = np.arange(NUM_CELLS) * D_Z
+            bottoms = np.broadcast_to(bottoms, (NUM_PARTICLES, NUM_CELLS)).T
+            positions = np.broadcast_to(pos[2], (NUM_CELLS, NUM_PARTICLES))
+            mask = (bottoms < positions) & (positions < bottoms + D_Z)
+
+            vel_b = np.broadcast_to(vel[1], (NUM_CELLS, NUM_PARTICLES))
+            vel_masked = np.ma.array(vel_b, mask=mask, dtype=np.float)
+            cell_average_y_velocities[i] = np.mean(vel_masked, axis=1)
 
             for cell in range(NUM_CELLS):
-                cell_bottom = cell * D_Z
-                cell_top = cell_bottom + D_Z
-                in_cell = (cell_bottom < pos[2]) & (pos[2] < cell_top)
-
-                particles_in_cell = np.sum(in_cell)
-                v_c = vel[:, in_cell]
+                particles_in_cell = np.sum(mask[cell])
+                v_c = vel[:, mask[cell]]
 
                 # Number of Candidate Collisions as determined by kinetic theory
                 NUM_CANDIDATES = np.ceil(
@@ -51,6 +65,7 @@ def main():
                 ).astype(int)
 
                 # Calculate internal collisions
+
                 for candidate in range(NUM_CANDIDATES):
                     v_i = v_c[:, np.random.randint(particles_in_cell)]
                     v_j = v_c[:, np.random.randint(particles_in_cell)]
@@ -73,23 +88,23 @@ def main():
                         v_i[:] = v_cm + 0.5 * v_p
                         v_j[:] = v_cm - 0.5 * v_p
 
-                        NUM_COLLISIONS += 1
+                        num_collisions += 1
 
-                vel[:, in_cell] = v_c
+                vel[:, mask[cell]] = v_c
 
-            # record pressure
-            pressure.append(SpecularWall.pressure)
-
+            # record system values
+            energy[i] = np.linalg.norm(avg_velocity[i, :]) * 0.5  # 1/2 mv^2
+            pressure[i] = SpecularWall.pressure
             # record v_y(z=0)
             y_velocity[sim, i] = np.mean(vel[1][(0 < pos[2]) & (pos[2] < D_Z)])
 
             add_to_plot(ax, pos, vel)
 
-
         SpecularWall.reset_pressure_parameter()
 
     plot_results(y_velocity)
-    plot_pressure(pressure)
+    plot_against_time(energy)
+
 
 if __name__ == "__main__":
     main()
