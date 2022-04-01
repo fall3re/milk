@@ -32,12 +32,18 @@ class ThermalWall:
         pos[2, hit_thermal_wall] = time_after_impact * vel[2, hit_thermal_wall]
 
     @property
-    def knrg(self): # kinetic energy of self
-        return (np.linalg.norm(self.vel) ** 2) * 0.5 * self.mass
+    def knrg(self, particles): # kinetic energy of self
+        knrg = 0
+        for particle in particles:
+            knrg += (np.linalg.norm(particle.vel) ** 2) * 0.5 * particle.mass
+        return knrg
 
     @property
-    def lmom(self): # linear momentum of self
-        return self.mass * self.vel
+    def lmom(self, particles): # linear momentum of self
+        lmom = 0
+        for particle in particles:
+            lmom += particle.mass * particle.vel
+        return lmom
 
 
 class SpecularWall:
@@ -55,9 +61,6 @@ class SpecularWall:
     def collide_with_specular_wall(self, z, v_z):
         hit_specular_wall = z > self.Height
 
-        # Update pressure
-        self.pressure += v_z
-
         # Correct position
         time_after_impact = (z[hit_specular_wall] - self.Height) / v_z[hit_specular_wall]
         z[hit_specular_wall] -= time_after_impact * v_z[hit_specular_wall]
@@ -67,11 +70,22 @@ class SpecularWall:
         # Complete movement
         z[hit_specular_wall] += time_after_impact * v_z[hit_specular_wall]
 
+        # Update Pressure Parameter
+    """
+        if hit_specular_wall:
+            self.pressure += 2 * max(v_z, -1 * v_z)
+    """
 
     @property
-    def knrg(self): # kinetic energy of self
-        return (np.linalg.norm(self.vel) ** 2) * 0.5 * self.mass
+    def knrg(self, particles): # kinetic energy of self
+        knrg = 0
+        for particle in particles:
+            knrg += (np.linalg.norm(particle.vel) ** 2) * 0.5 * particle.mass
+        return knrg
 
     @property
-    def lmom(self): # linear momentum of self
-        return self.mass * self.vel
+    def lmom(self, particles): # linear momentum of self
+        lmom = 0
+        for particle in particles:
+            lmom += particle.mass * particle.vel
+        return lmom

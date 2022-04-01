@@ -5,21 +5,14 @@ from scipy import special
 
 
 def add_to_plot(ax, pos, vel):
-    bin = D_Z * np.linspace(0.5, NUM_CELLS - 0.5, NUM_CELLS)
     profile = np.zeros((NUM_CELLS, 1))
     for cell in range(NUM_CELLS):
         in_cell = (cell * D_Z < pos[2]) & (pos[2] < (cell + 1) * D_Z)
         profile[cell] = np.mean(vel[1][in_cell])
 
-def plot_pressure(pressure):
+def plot_against_time(parameter):
     fig = plt.figure(figsize=(6, 4), dpi=80)
-    ax2 = plt.gca()
-    plt.plot(pressure, label='Pressure on Specular Wall', color='black')
-    plt.xlabel(r'$t/\tau$')
-    plt.ylabel(r'$Pressure/Pa$')
-    ax2.set(xlim=(0, NUM_MEAN_FREE_TIMES), ylim=(0.5, 1.1))
-    ax2.legend(loc='upper left')
-    plt.savefig('pressure.png', dpi=240)
+    plt.plot(parameter, label='Caption - Edit', color='black')
     plt.show()
 
 def plot_results(y_velocity):
