@@ -1,11 +1,8 @@
 import matplotlib.pyplot as plt
-import numpy as np
-
 from CONFIG import *
 import wall
 import tqdm
 from PLOTTING import add_to_plot, plot_results, plot_against_time
-from math import floor
 
 
 np.random.seed(42)
@@ -46,6 +43,7 @@ def main():
             # Set Periodic Boundary conditions
             pos[:2] = np.mod(pos[:2], D_Z)
 
+            # Determine cell parameters, and which particles are in each cell
             bottoms = np.arange(NUM_CELLS) * D_Z
             bottoms = np.broadcast_to(bottoms, (NUM_PARTICLES, NUM_CELLS)).T
             positions = np.broadcast_to(pos[2], (NUM_CELLS, NUM_PARTICLES))
@@ -95,15 +93,18 @@ def main():
             # record system values
             energy[i] = np.linalg.norm(avg_velocity[i, :]) * 0.5  # 1/2 mv^2
             pressure[i] = SpecularWall.pressure
+            SpecularWall.reset_pressure_parameter()
             # record v_y(z=0)
             y_velocity[sim, i] = np.mean(vel[1][(0 < pos[2]) & (pos[2] < D_Z)])
 
             add_to_plot(ax, pos, vel)
 
-        SpecularWall.reset_pressure_parameter()
 
-    plot_results(y_velocity)
-    plot_against_time(energy)
+    # MANUALLY DEFINED PLOTTING OPTIONS
+    #plot_results(y_velocity)
+    plot_against_time(pressure)
+    for i in range(20):
+        plot_against_time(cell_average_y_velocities[100*i], 0, 0.6)
 
 
 if __name__ == "__main__":
