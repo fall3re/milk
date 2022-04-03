@@ -71,10 +71,9 @@ class SpecularWall:
         z[hit_specular_wall] += time_after_impact * v_z[hit_specular_wall]
 
         # Update Pressure Parameter
-    """
-        if hit_specular_wall:
-            self.pressure += 2 * max(v_z, -1 * v_z)
-    """
+
+        self.pressure += 2 * sum(np.abs(v_z[hit_specular_wall]))
+
 
     @property
     def knrg(self, particles): # kinetic energy of self
