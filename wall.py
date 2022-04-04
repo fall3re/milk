@@ -2,6 +2,16 @@ from CONFIG import WALL_VELOCITY, WALL_TEMPERATURE, HEIGHT
 import numpy as np
 
 class ThermalWall:
+    """
+        Class ThermalWall modelling the collisions and interactions of particle against thermal wall.
+
+        Parameters
+        ----------
+        wall_T: float
+            Temperature of the wall, defined in Config file
+        wall_v: float
+            Velocity of the wall in Y-direction, defined in Config file
+    """
     def __init__(
         self,
         wall_T=WALL_TEMPERATURE,
@@ -47,6 +57,14 @@ class ThermalWall:
 
 
 class SpecularWall:
+    """
+        Class SpecularWall modelling the collisions and interactions of particle against specular wall.
+
+        Parameters
+        ----------
+        boxHeight: float
+            Length of the box, and by extension Z-axis co-ordinate of the infinite specular wall.
+    """
     def __init__(
         self,
         boxHeight = HEIGHT,
@@ -71,7 +89,6 @@ class SpecularWall:
         z[hit_specular_wall] += time_after_impact * v_z[hit_specular_wall]
 
         # Update Pressure Parameter
-
         self.pressure += 2 * sum(np.abs(v_z[hit_specular_wall]))
 
 
