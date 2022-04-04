@@ -10,8 +10,8 @@ np.random.seed(42)
 class particle:
     def __init__(
         self,
-        pos = -2,
-        vel = 2
+        pos = [0,0,-2],
+        vel = [0,0,2]
         ):
         self.pos = pos
         self.vel = vel
@@ -19,7 +19,9 @@ class particle:
 collider = particle()
 
 class TestThermalWall:
-    def as_intended(self):
+
+    #Test the functionality of the collision with Thermal wall.
+    def test_collide(self):
         subject.collide_with_thermal_wall(collider.pos,collider.vel)
         actual = collider.pos
 
